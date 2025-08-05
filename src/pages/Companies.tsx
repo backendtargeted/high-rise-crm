@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Building, Globe } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Search, Building, Globe, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Navbar from '@/components/Navbar';
@@ -177,39 +178,52 @@ const Companies = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCompanies.map((company) => (
-            <Card key={company.company_id} className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center">
-                  <Building className="h-5 w-5 mr-2" />
-                  {company.name}
-                </CardTitle>
-                <CardDescription className="text-slate-400">
-                  {company.industry || 'No industry specified'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {company.website && (
-                  <div className="flex items-center text-slate-300">
-                    <Globe className="h-4 w-4 mr-2" />
-                    <a 
-                      href={company.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm hover:text-primary transition-colors"
-                    >
-                      {company.website}
-                    </a>
-                  </div>
-                )}
-                <div className="text-xs text-slate-500 mt-2">
-                  Added: {new Date(company.created_at).toLocaleDateString()}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="bg-slate-800/50 border-slate-700">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-slate-200">Company</TableHead>
+                <TableHead className="text-slate-200">Industry</TableHead>
+                <TableHead className="text-slate-200">Website</TableHead>
+                <TableHead className="text-slate-200">Added</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCompanies.map((company) => (
+                <TableRow key={company.company_id} className="border-slate-700">
+                  <TableCell>
+                    <div className="flex items-center text-white">
+                      <Building className="h-4 w-4 mr-2 text-slate-400" />
+                      {company.name}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-slate-300">
+                    {company.industry || 'No industry specified'}
+                  </TableCell>
+                  <TableCell>
+                    {company.website ? (
+                      <a
+                        href={company.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <Globe className="h-4 w-4 mr-1" />
+                        <span className="text-sm">{company.website}</span>
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </a>
+                    ) : (
+                      <span className="text-slate-500">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-slate-400 text-sm">
+                    {new Date(company.created_at).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
 
         {filteredCompanies.length === 0 && (
           <div className="text-center py-12">
