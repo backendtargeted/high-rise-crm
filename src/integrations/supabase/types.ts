@@ -306,6 +306,7 @@ export type Database = {
           user_id: number
           role: string
           manager_id: number
+          email: string
         }[]
       }
       postgres_fdw_disconnect: {
