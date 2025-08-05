@@ -62,11 +62,11 @@ const Pipeline = () => {
 
   const statusColumns = [
     { id: 'created', title: 'Created', color: 'bg-muted/50 border-l-4 border-l-muted-foreground' },
-    { id: 'sent', title: 'Sent', color: 'bg-yellow-50 border-l-4 border-l-yellow-500' },
-    { id: 'viewed', title: 'Viewed', color: 'bg-blue-50 border-l-4 border-l-blue-500' },
-    { id: 'signed', title: 'Signed', color: 'bg-green-50 border-l-4 border-l-green-500' },
-    { id: 'funded', title: 'Funded', color: 'bg-purple-50 border-l-4 border-l-purple-500' },
-    { id: 'closed', title: 'Closed', color: 'bg-red-50 border-l-4 border-l-red-500' },
+    { id: 'sent', title: 'Sent', color: 'bg-accent/30 border-l-4 border-l-accent-foreground' },
+    { id: 'viewed', title: 'Viewed', color: 'bg-primary/10 border-l-4 border-l-primary' },
+    { id: 'signed', title: 'Signed', color: 'bg-secondary/50 border-l-4 border-l-secondary-foreground' },
+    { id: 'funded', title: 'Funded', color: 'bg-accent/40 border-l-4 border-l-accent-foreground' },
+    { id: 'closed', title: 'Closed', color: 'bg-destructive/10 border-l-4 border-l-destructive' },
   ];
 
   const fetchData = async () => {
