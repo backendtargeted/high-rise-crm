@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Search, Phone, Mail, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import Navbar from '@/components/Navbar';
 
 interface Lead {
   lead_id: number;
@@ -111,19 +112,24 @@ const Leads = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-white">Loading leads...</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <Navbar />
+         <div className="p-4">
+           <div className="max-w-7xl mx-auto">
+             <div className="flex items-center justify-center h-64">
+               <div className="text-white">Loading leads...</div>
+             </div>
+           </div>
+         </div>
+       </div>
+     );
+   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <Navbar />
+      <div className="p-4">
+        <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Leads Management</h1>
@@ -258,6 +264,7 @@ const Leads = () => {
             </p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

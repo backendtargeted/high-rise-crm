@@ -9,6 +9,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Leads from "./pages/Leads";
 import Companies from "./pages/Companies";
+import Applications from "./pages/Applications";
+import Analytics from "./pages/Analytics";
+import Pipeline from "./pages/Pipeline";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +46,30 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Companies />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/applications" 
+              element={
+                <ProtectedRoute>
+                  <Applications />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/pipeline" 
+              element={
+                <ProtectedRoute>
+                  <Pipeline />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/analytics" 
+              element={
+                <ProtectedRoute>
+                  <Analytics />
                 </ProtectedRoute>
               } 
             />
