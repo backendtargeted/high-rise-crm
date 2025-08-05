@@ -30,7 +30,7 @@ const Navbar = () => {
 
   const navItems = [
     { to: '/', icon: Home, label: 'Dashboard' },
-    { to: '/companies', icon: Building, label: 'Companies' },
+    ...(profile?.role === 'admin' ? [{ to: '/companies', icon: Building, label: 'Companies' }] : []),
     { to: '/pipeline', icon: GitBranch, label: 'Pipeline' },
     { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   ];

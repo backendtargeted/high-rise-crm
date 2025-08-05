@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/components/theme-provider";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Companies from "./pages/Companies";
@@ -37,7 +38,9 @@ const App = () => (
               path="/companies" 
               element={
                 <ProtectedRoute>
-                  <Companies />
+                  <AdminRoute>
+                    <Companies />
+                  </AdminRoute>
                 </ProtectedRoute>
               } 
             />
