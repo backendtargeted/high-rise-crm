@@ -49,9 +49,7 @@ const App = () => (
               path="/companies/:id" 
               element={
                 <ProtectedRoute>
-                  <AdminRoute>
-                    <CompanyDetails />
-                  </AdminRoute>
+                  <CompanyDetails />
                 </ProtectedRoute>
               } 
             />

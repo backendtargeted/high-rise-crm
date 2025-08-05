@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ const CompanyDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile } = useUserProfile();
   const [company, setCompany] = useState<Company | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -183,12 +185,10 @@ const CompanyDetails = () => {
             <div className="text-center py-12">
               <h3 className="text-xl font-semibold text-foreground mb-2">Company not found</h3>
               <p className="text-muted-foreground mb-4">The company you're looking for doesn't exist.</p>
-              <Link to="/companies">
-                <Button>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Companies
-                </Button>
-              </Link>
+              <Button onClick={() => window.history.back()}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
             </div>
           </div>
         </div>
@@ -204,12 +204,14 @@ const CompanyDetails = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
-              <Link to="/companies">
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Companies
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.history.back()}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
               <div>
                 <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
                   <Building className="h-8 w-8" />
@@ -218,25 +220,28 @@ const CompanyDetails = () => {
                 <p className="text-muted-foreground">Company Details & Analytics</p>
               </div>
             </div>
-            <div className="flex space-x-2">
-              {isEditing ? (
-                <>
-                  <Button onClick={handleSaveChanges} size="sm">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
+            {/* Only show edit functionality for admin users */}
+            {profile?.role === 'admin' && (
+              <div className="flex space-x-2">
+                {isEditing ? (
+                  <>
+                    <Button onClick={handleSaveChanges} size="sm">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </Button>
+                    <Button onClick={handleCancelEdit} variant="outline" size="sm">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={() => setIsEditing(true)} size="sm">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Company
                   </Button>
-                  <Button onClick={handleCancelEdit} variant="outline" size="sm">
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </>
-              ) : (
-                <Button onClick={() => setIsEditing(true)} size="sm">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Company
-                </Button>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Company Info */}
@@ -248,7 +253,7 @@ const CompanyDetails = () => {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="name">Company Name</Label>
-                  {isEditing ? (
+                  {isEditing && profile?.role === 'admin' ? (
                     <Input
                       id="name"
                       value={editedCompany.name || ''}
@@ -260,7 +265,7 @@ const CompanyDetails = () => {
                 </div>
                 <div>
                   <Label htmlFor="industry">Industry</Label>
-                  {isEditing ? (
+                  {isEditing && profile?.role === 'admin' ? (
                     <Input
                       id="industry"
                       value={editedCompany.industry || ''}
@@ -272,7 +277,7 @@ const CompanyDetails = () => {
                 </div>
                 <div>
                   <Label htmlFor="website">Website</Label>
-                  {isEditing ? (
+                  {isEditing && profile?.role === 'admin' ? (
                     <Input
                       id="website"
                       type="url"
