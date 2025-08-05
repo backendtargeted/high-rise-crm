@@ -206,6 +206,35 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          updated_at?: string | null
+          user_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           email: string | null
@@ -258,6 +287,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_user_data: {
+        Args: { target_user_id: number }
+        Returns: boolean
+      }
+      get_current_user_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: number
+          role: string
+          manager_id: number
+        }[]
+      }
       postgres_fdw_disconnect: {
         Args: { "": string }
         Returns: boolean
