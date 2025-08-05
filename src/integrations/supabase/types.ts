@@ -291,6 +291,15 @@ export type Database = {
         Args: { target_user_id: number }
         Returns: boolean
       }
+      get_current_user_by_email: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: number
+          role: string
+          manager_id: number
+          email: string
+        }[]
+      }
       get_current_user_data: {
         Args: Record<PropertyKey, never>
         Returns: {
