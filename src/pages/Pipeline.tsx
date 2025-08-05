@@ -61,12 +61,12 @@ const Pipeline = () => {
   const { toast } = useToast();
 
   const statusColumns = [
-    { id: 'created', title: 'Created', color: 'bg-gray-100' },
-    { id: 'sent', title: 'Sent', color: 'bg-yellow-100' },
-    { id: 'viewed', title: 'Viewed', color: 'bg-blue-100' },
-    { id: 'signed', title: 'Signed', color: 'bg-green-100' },
-    { id: 'funded', title: 'Funded', color: 'bg-purple-100' },
-    { id: 'closed', title: 'Closed', color: 'bg-red-100' },
+    { id: 'created', title: 'Created', color: 'bg-muted/50 border-l-4 border-l-muted-foreground' },
+    { id: 'sent', title: 'Sent', color: 'bg-yellow-50 border-l-4 border-l-yellow-500' },
+    { id: 'viewed', title: 'Viewed', color: 'bg-blue-50 border-l-4 border-l-blue-500' },
+    { id: 'signed', title: 'Signed', color: 'bg-green-50 border-l-4 border-l-green-500' },
+    { id: 'funded', title: 'Funded', color: 'bg-purple-50 border-l-4 border-l-purple-500' },
+    { id: 'closed', title: 'Closed', color: 'bg-red-50 border-l-4 border-l-red-500' },
   ];
 
   const fetchData = async () => {
@@ -219,9 +219,9 @@ const Pipeline = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading pipeline...</p>
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground">Loading pipeline data...</p>
           </div>
         </div>
       </div>
@@ -297,24 +297,25 @@ const Pipeline = () => {
         </div>
 
         {/* Kanban Board */}
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-            {statusColumns.map((column) => (
-              <div key={column.id} className={`${column.color} rounded-lg p-4`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">{column.title}</h3>
-                  <Badge variant="secondary">
-                    {getDealsForStatus(column.id).length}
-                  </Badge>
-                </div>
-                
-                <Droppable droppableId={column.id}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`min-h-[200px] ${snapshot.isDraggingOver ? 'bg-white/50' : ''} rounded-lg`}
-                    >
+        <Card className="p-6">
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+              {statusColumns.map((column) => (
+                <div key={column.id} className={`${column.color} rounded-lg p-4 min-h-[600px]`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-foreground">{column.title}</h3>
+                    <Badge variant="secondary" className="bg-background text-foreground">
+                      {getDealsForStatus(column.id).length}
+                    </Badge>
+                  </div>
+                  
+                  <Droppable droppableId={column.id}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`min-h-[400px] ${snapshot.isDraggingOver ? 'bg-background/50' : ''} rounded-lg transition-colors`}
+                      >
                       {getDealsForStatus(column.id).map((deal, index) => (
                         <Draggable
                           key={deal.application_id}
@@ -326,20 +327,20 @@ const Pipeline = () => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className={`bg-white rounded-lg p-3 mb-2 shadow-sm border ${
-                                snapshot.isDragging ? 'shadow-lg' : ''
+                              className={`bg-card rounded-lg p-3 mb-3 shadow-sm border border-border transition-all hover:shadow-md ${
+                                snapshot.isDragging ? 'shadow-lg rotate-3 scale-105' : ''
                               }`}
                             >
-                              <div className="font-medium text-sm mb-1">
+                              <div className="font-medium text-sm mb-2 text-foreground">
                                 {deal.leads?.first_name} {deal.leads?.last_name}
                               </div>
-                              <div className="text-xs text-muted-foreground mb-1">
-                                {deal.leads?.companies?.name}
+                              <div className="text-xs text-muted-foreground mb-1 font-medium">
+                                {deal.leads?.companies?.name || 'No Company'}
                               </div>
-                              <div className="text-xs text-muted-foreground mb-2">
+                              <div className="text-xs text-muted-foreground mb-3 truncate">
                                 {deal.leads?.email}
                               </div>
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center justify-between mb-2">
                                 <Badge variant="outline" className="text-xs">
                                   {deal.type || 'Application'}
                                 </Badge>
@@ -347,8 +348,8 @@ const Pipeline = () => {
                                   {new Date(deal.created_at).toLocaleDateString()}
                                 </div>
                               </div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {deal.users?.fullname}
+                              <div className="text-xs text-muted-foreground mt-2 font-medium">
+                                👤 {deal.users?.fullname}
                               </div>
                             </div>
                           )}
@@ -360,8 +361,9 @@ const Pipeline = () => {
                 </Droppable>
               </div>
             ))}
-          </div>
-        </DragDropContext>
+            </div>
+          </DragDropContext>
+        </Card>
       </main>
     </div>
   );
