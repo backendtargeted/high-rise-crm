@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Building2, LogOut, Users, Target, BarChart3, Home, Building, GitBranch } from 'lucide-react';
+import { Building2, LogOut, BarChart3, Home, Building, GitBranch } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useLocation } from 'react-router-dom';
@@ -28,9 +28,7 @@ const Navbar = () => {
 
   const navItems = [
     { to: '/', icon: Home, label: 'Dashboard' },
-    { to: '/leads', icon: Users, label: 'Leads' },
     { to: '/companies', icon: Building, label: 'Companies' },
-    { to: '/applications', icon: Target, label: 'Applications' },
     { to: '/pipeline', icon: GitBranch, label: 'Pipeline' },
     { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   ];

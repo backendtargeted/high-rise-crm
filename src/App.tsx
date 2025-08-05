@@ -8,9 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Leads from "./pages/Leads";
 import Companies from "./pages/Companies";
-import Applications from "./pages/Applications";
 import Analytics from "./pages/Analytics";
 import Pipeline from "./pages/Pipeline";
 import NotFound from "./pages/NotFound";
@@ -36,26 +34,10 @@ const App = () => (
               } 
             />
             <Route 
-              path="/leads" 
-              element={
-                <ProtectedRoute>
-                  <Leads />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
               path="/companies" 
               element={
                 <ProtectedRoute>
                   <Companies />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/applications" 
-              element={
-                <ProtectedRoute>
-                  <Applications />
                 </ProtectedRoute>
               } 
             />
