@@ -2,11 +2,13 @@ import { Button } from '@/components/ui/button';
 import { Building2, LogOut, BarChart3, Home, Building, GitBranch } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { Link, useLocation } from 'react-router-dom';
 import RealtimeNotifications from './RealtimeNotifications';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
+  const { profile } = useUserProfile();
   const { toast } = useToast();
   const location = useLocation();
 
@@ -66,7 +68,7 @@ const Navbar = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <span className="text-muted-foreground">Welcome, {user?.email}</span>
+            <span className="text-muted-foreground">Welcome, {profile?.fullname || user?.email}</span>
             <RealtimeNotifications />
             <Button
               variant="outline"
