@@ -3,6 +3,7 @@ import { Building2, LogOut, Users, Target, BarChart3, Home, Building, GitBranch 
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useLocation } from 'react-router-dom';
+import RealtimeNotifications from './RealtimeNotifications';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -68,6 +69,7 @@ const Navbar = () => {
           
           <div className="flex items-center space-x-4">
             <span className="text-slate-300">Welcome, {user?.email}</span>
+            <RealtimeNotifications />
             <Button
               variant="outline"
               size="sm"
