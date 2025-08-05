@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -192,10 +193,13 @@ const Companies = () => {
               {filteredCompanies.map((company) => (
                 <TableRow key={company.company_id} className="border-slate-700">
                   <TableCell>
-                    <div className="flex items-center text-white">
+                    <Link 
+                      to={`/companies/${company.company_id}`}
+                      className="flex items-center text-white hover:text-primary transition-colors"
+                    >
                       <Building className="h-4 w-4 mr-2 text-slate-400" />
                       {company.name}
-                    </div>
+                    </Link>
                   </TableCell>
                   <TableCell className="text-slate-300">
                     {company.industry || 'No industry specified'}

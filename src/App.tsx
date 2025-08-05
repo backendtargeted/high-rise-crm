@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminRoute from "@/components/AdminRoute";
 import Index from "./pages/Index";
+import CompanyDetails from "./pages/CompanyDetails";
 import Auth from "./pages/Auth";
 import Companies from "./pages/Companies";
 import Analytics from "./pages/Analytics";
@@ -40,6 +41,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AdminRoute>
                     <Companies />
+                  </AdminRoute>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/companies/:id" 
+              element={
+                <ProtectedRoute>
+                  <AdminRoute>
+                    <CompanyDetails />
                   </AdminRoute>
                 </ProtectedRoute>
               } 
