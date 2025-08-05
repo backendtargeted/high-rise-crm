@@ -66,7 +66,6 @@ const Pipeline = () => {
     { id: 'viewed', title: 'Viewed', color: 'bg-primary/10 border-l-4 border-l-primary' },
     { id: 'signed', title: 'Signed', color: 'bg-secondary/50 border-l-4 border-l-secondary-foreground' },
     { id: 'funded', title: 'Funded', color: 'bg-accent/40 border-l-4 border-l-accent-foreground' },
-    { id: 'closed', title: 'Closed', color: 'bg-destructive/10 border-l-4 border-l-destructive' },
   ];
 
   const fetchData = async () => {
@@ -299,7 +298,7 @@ const Pipeline = () => {
         {/* Kanban Board */}
         <Card className="p-6">
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {statusColumns.map((column) => (
                 <div key={column.id} className={`${column.color} rounded-lg p-4 min-h-[600px]`}>
                   <div className="flex items-center justify-between mb-4">
