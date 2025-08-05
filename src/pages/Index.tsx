@@ -1,8 +1,59 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Send, FileSignature, CheckCircle } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 const Index = () => {
+  const [dashboardData, setDashboardData] = useState({
+    fundedDeals: 0,
+    appsSent: 0,
+    appsSigned: 0,
+    pendingApps: 0,
+    loading: true
+  });
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch applications data
+      const { data: applications } = await supabase
+        .from('applications_tracking')
+        .select('application_status, date_application_sent, date_signed');
+
+      const appsSent = applications?.filter(app => app.date_application_sent).length || 0;
+      const appsSigned = applications?.filter(app => app.application_status === 'signed').length || 0;
+      
+      // Calculate pending apps (sent in last 7 days but not signed)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const pendingApps = applications?.filter(app => 
+        app.date_application_sent && 
+        new Date(app.date_application_sent) >= sevenDaysAgo && 
+        app.application_status !== 'signed'
+      ).length || 0;
+
+      // For now, set funded deals to 0 as we don't have this data yet
+      const fundedDeals = 0;
+
+      setDashboardData({
+        fundedDeals,
+        appsSent,
+        appsSigned,
+        pendingApps,
+        loading: false
+      });
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setDashboardData(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -39,7 +90,9 @@ const Index = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-card-foreground">$0</div>
+                <div className="text-2xl font-bold text-card-foreground">
+                  {dashboardData.loading ? '...' : `$${dashboardData.fundedDeals.toLocaleString()}`}
+                </div>
               </CardContent>
             </Card>
 
@@ -51,7 +104,9 @@ const Index = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-card-foreground">0</div>
+                <div className="text-2xl font-bold text-card-foreground">
+                  {dashboardData.loading ? '...' : dashboardData.appsSent}
+                </div>
               </CardContent>
             </Card>
 
@@ -63,7 +118,9 @@ const Index = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-card-foreground">0</div>
+                <div className="text-2xl font-bold text-card-foreground">
+                  {dashboardData.loading ? '...' : dashboardData.appsSigned}
+                </div>
               </CardContent>
             </Card>
 
@@ -76,9 +133,22 @@ const Index = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="h-32 flex items-center justify-center">
-                <div className="text-muted-foreground text-sm">
-                  No pending applications
-                </div>
+                {dashboardData.loading ? (
+                  <div className="text-muted-foreground text-sm">Loading...</div>
+                ) : dashboardData.pendingApps > 0 ? (
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-card-foreground mb-2">
+                      {dashboardData.pendingApps}
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      applications pending signature
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-muted-foreground text-sm">
+                    No pending applications
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
