@@ -1,1 +1,32 @@
 project_id = "miazocmpwkglhpkslkuh"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1:54321"
+
+[inbucket]
+enabled = true
+port = 54324
+api_url = "http://127.0.0.1:54321"
+
+[functions.api-leads]
+verify_jwt = false
+
+[functions.api-deals] 
+verify_jwt = false
+
+[functions.api-analytics]
+verify_jwt = false

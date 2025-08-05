@@ -1,198 +1,227 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { 
-  ReactFlow, 
-  MiniMap, 
-  Controls, 
-  Background, 
-  useNodesState, 
-  useEdgesState,
-  Node,
-  Edge
-} from '@xyflow/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Target, Building, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
-import '@xyflow/react/dist/style.css';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+
+interface SalesStats {
+  totalLeads: number;
+  totalApplications: number;
+  totalCompanies: number;
+  conversionRate: number;
+}
+
+interface StatusCount {
+  status: string;
+  count: number;
+}
+
+interface Deal {
+  application_id: number;
+  application_status: string;
+  type: string;
+  created_at: string;
+  date_application_sent?: string;
+  leads: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    companies: {
+      name: string;
+    };
+  };
+  users: {
+    fullname: string;
+  };
+}
+
+interface List {
+  list_id: number;
+  list_name: string;
+}
 
 const Pipeline = () => {
-  const [stats, setStats] = useState({
+  const [salesStats, setSalesStats] = useState<SalesStats>({
     totalLeads: 0,
     totalApplications: 0,
     totalCompanies: 0,
-    conversionRate: 0
+    conversionRate: 0,
   });
-  
-  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [lists, setLists] = useState<List[]>([]);
+  const [selectedList, setSelectedList] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
 
-  const initialNodes: Node[] = [
-    {
-      id: '1',
-      position: { x: 100, y: 100 },
-      data: { label: 'New Leads' },
-      type: 'input',
-      style: { backgroundColor: '#3B82F6', color: 'white', border: '2px solid #1E40AF' }
-    },
-    {
-      id: '2',
-      position: { x: 350, y: 100 },
-      data: { label: 'Applications Created' },
-      style: { backgroundColor: '#6B7280', color: 'white', border: '2px solid #374151' }
-    },
-    {
-      id: '3',
-      position: { x: 650, y: 100 },
-      data: { label: 'Applications Sent' },
-      style: { backgroundColor: '#F59E0B', color: 'white', border: '2px solid #D97706' }
-    },
-    {
-      id: '4',
-      position: { x: 950, y: 100 },
-      data: { label: 'Responses Received' },
-      style: { backgroundColor: '#10B981', color: 'white', border: '2px solid #047857' }
-    },
-    {
-      id: '5',
-      position: { x: 1250, y: 100 },
-      data: { label: 'Contracts Signed' },
-      type: 'output',
-      style: { backgroundColor: '#8B5CF6', color: 'white', border: '2px solid #7C3AED' }
-    },
-    {
-      id: '6',
-      position: { x: 650, y: 250 },
-      data: { label: 'Rejected Applications' },
-      style: { backgroundColor: '#EF4444', color: 'white', border: '2px solid #DC2626' }
-    }
+  const statusColumns = [
+    { id: 'created', title: 'Created', color: 'bg-gray-100' },
+    { id: 'sent', title: 'Sent', color: 'bg-yellow-100' },
+    { id: 'viewed', title: 'Viewed', color: 'bg-blue-100' },
+    { id: 'signed', title: 'Signed', color: 'bg-green-100' },
+    { id: 'funded', title: 'Funded', color: 'bg-purple-100' },
+    { id: 'closed', title: 'Closed', color: 'bg-red-100' },
   ];
 
-  const initialEdges: Edge[] = [
-    {
-      id: 'e1-2',
-      source: '1',
-      target: '2',
-      animated: true,
-      style: { stroke: '#3B82F6', strokeWidth: 3 }
-    },
-    {
-      id: 'e2-3',
-      source: '2',
-      target: '3',
-      animated: true,
-      style: { stroke: '#F59E0B', strokeWidth: 3 }
-    },
-    {
-      id: 'e3-4',
-      source: '3',
-      target: '4',
-      animated: true,
-      style: { stroke: '#10B981', strokeWidth: 3 }
-    },
-    {
-      id: 'e4-5',
-      source: '4',
-      target: '5',
-      animated: true,
-      style: { stroke: '#8B5CF6', strokeWidth: 3 }
-    },
-    {
-      id: 'e3-6',
-      source: '3',
-      target: '6',
-      animated: true,
-      style: { stroke: '#EF4444', strokeWidth: 2 }
-    }
-  ];
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-  const fetchAnalytics = async () => {
+  const fetchData = async () => {
     try {
-      // Fetch basic stats
-      const [leadsRes, appsRes, companiesRes] = await Promise.all([
+      setLoading(true);
+      
+      // Fetch basic counts
+      const [leadsResult, applicationsResult, companiesResult] = await Promise.all([
         supabase.from('leads').select('*', { count: 'exact', head: true }),
         supabase.from('applications_tracking').select('*', { count: 'exact', head: true }),
-        supabase.from('companies').select('*', { count: 'exact', head: true })
+        supabase.from('companies').select('*', { count: 'exact', head: true }),
       ]);
 
-      const totalLeads = leadsRes.count || 0;
-      const totalApplications = appsRes.count || 0;
-      const totalCompanies = companiesRes.count || 0;
+      const totalLeads = leadsResult.count || 0;
+      const totalApplications = applicationsResult.count || 0;
+      const totalCompanies = companiesResult.count || 0;
       const conversionRate = totalLeads > 0 ? (totalApplications / totalLeads) * 100 : 0;
 
-      setStats({
+      setSalesStats({
         totalLeads,
         totalApplications,
         totalCompanies,
-        conversionRate
+        conversionRate: Math.round(conversionRate * 100) / 100,
       });
 
-      // Fetch application status distribution
-      const { data: statusData } = await supabase
+      // Fetch deals with relationships
+      let dealsQuery = supabase
         .from('applications_tracking')
-        .select('application_status');
+        .select(`
+          *,
+          leads (
+            first_name,
+            last_name,
+            email,
+            companies (
+              name
+            )
+          ),
+          users (
+            fullname
+          )
+        `);
 
-      const counts = statusData?.reduce((acc: any, app) => {
-        acc[app.application_status] = (acc[app.application_status] || 0) + 1;
+      if (selectedList !== 'all') {
+        dealsQuery = dealsQuery.eq('list_id', parseInt(selectedList));
+      }
+
+      const { data: dealsData, error: dealsError } = await dealsQuery;
+
+      if (dealsError) throw dealsError;
+
+      const filteredDeals = dealsData?.filter(deal => {
+        if (!searchTerm) return true;
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          deal.leads?.first_name?.toLowerCase().includes(searchLower) ||
+          deal.leads?.last_name?.toLowerCase().includes(searchLower) ||
+          deal.leads?.email?.toLowerCase().includes(searchLower) ||
+          deal.leads?.companies?.name?.toLowerCase().includes(searchLower)
+        );
+      }) || [];
+
+      setDeals(filteredDeals);
+
+      // Calculate status counts from filtered deals
+      const statusMap = filteredDeals.reduce((acc: { [key: string]: number }, deal) => {
+        acc[deal.application_status] = (acc[deal.application_status] || 0) + 1;
         return acc;
       }, {});
 
-      setStatusCounts(counts || {});
-
-      // Update nodes with actual data
-      setNodes((nds) => nds.map((node) => {
-        let count = 0;
-        switch (node.id) {
-          case '1':
-            count = totalLeads;
-            break;
-          case '2':
-            count = counts?.created || 0;
-            break;
-          case '3':
-            count = counts?.sent || 0;
-            break;
-          case '4':
-            count = counts?.responded || 0;
-            break;
-          case '5':
-            count = counts?.signed || 0;
-            break;
-          case '6':
-            count = counts?.rejected || 0;
-            break;
-        }
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            label: `${node.data.label}: ${count}`
-          }
-        };
+      const statusCountsArray = Object.entries(statusMap).map(([status, count]) => ({
+        status,
+        count: count as number,
       }));
 
+      setStatusCounts(statusCountsArray);
+
+      // Fetch lists for filtering
+      const { data: listsData } = await supabase
+        .from('lists')
+        .select('list_id, list_name')
+        .order('list_name');
+
+      setLists(listsData || []);
+
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      console.error('Error fetching data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch data",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+
+    const { source, destination, draggableId } = result;
+    
+    if (source.droppableId === destination.droppableId) return;
+
+    const dealId = parseInt(draggableId);
+    const newStatus = destination.droppableId;
+
+    try {
+      const { error } = await supabase
+        .from('applications_tracking')
+        .update({ application_status: newStatus })
+        .eq('application_id', dealId);
+
+      if (error) throw error;
+
+      // Update local state
+      setDeals(prevDeals => 
+        prevDeals.map(deal => 
+          deal.application_id === dealId 
+            ? { ...deal, application_status: newStatus }
+            : deal
+        )
+      );
+
+      toast({
+        title: "Success",
+        description: "Deal status updated",
+      });
+
+    } catch (error) {
+      console.error('Error updating deal status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update deal status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getDealsForStatus = (status: string) => {
+    return deals.filter(deal => deal.application_status === status);
+  };
+
   useEffect(() => {
-    fetchAnalytics();
-  }, []);
+    fetchData();
+  }, [selectedList, searchTerm]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="p-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-center h-64">
-              <div className="text-white">Loading pipeline...</div>
-            </div>
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading pipeline...</p>
           </div>
         </div>
       </div>
@@ -200,105 +229,140 @@ const Pipeline = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Sales Pipeline</h1>
-            <p className="text-slate-400">Visual workflow of your sales process</p>
-          </div>
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2">Deal Pipeline</h1>
+          <p className="text-muted-foreground">Drag and drop deals to update their status</p>
+        </div>
 
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-200">Total Leads</CardTitle>
-                <Users className="h-4 w-4 text-slate-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">{stats.totalLeads}</div>
-                <p className="text-xs text-slate-400">Prospects in database</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-200">Applications</CardTitle>
-                <Target className="h-4 w-4 text-slate-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">{stats.totalApplications}</div>
-                <p className="text-xs text-slate-400">Total applications sent</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-200">Companies</CardTitle>
-                <Building className="h-4 w-4 text-slate-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">{stats.totalCompanies}</div>
-                <p className="text-xs text-slate-400">Companies tracked</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-200">Conversion Rate</CardTitle>
-                <TrendingUp className="h-4 w-4 text-slate-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">{stats.conversionRate.toFixed(1)}%</div>
-                <p className="text-xs text-slate-400">Leads to applications</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Pipeline Flow */}
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Sales Pipeline Flow</CardTitle>
-              <CardDescription className="text-slate-400">Interactive visualization of your sales process</CardDescription>
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
             </CardHeader>
             <CardContent>
-              <div style={{ width: '100%', height: '500px' }}>
-                <ReactFlow
-                  nodes={nodes}
-                  edges={edges}
-                  onNodesChange={onNodesChange}
-                  onEdgesChange={onEdgesChange}
-                  fitView
-                  attributionPosition="top-right"
-                  style={{ backgroundColor: '#0F172A' }}
-                >
-                  <MiniMap 
-                    zoomable 
-                    pannable 
-                    style={{ backgroundColor: '#1E293B' }}
-                    nodeColor="#3B82F6"
-                  />
-                  <Controls style={{ backgroundColor: '#1E293B' }} />
-                  <Background color="#374151" gap={16} />
-                </ReactFlow>
-              </div>
+              <div className="text-2xl font-bold">{salesStats.totalLeads}</div>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Applications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{salesStats.totalApplications}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Companies</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{salesStats.totalCompanies}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{salesStats.conversionRate}%</div>
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* Status Breakdown */}
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {Object.entries(statusCounts).map(([status, count]) => (
-              <Card key={status} className="bg-slate-800/50 border-slate-700">
-                <CardContent className="p-4 text-center">
-                  <div className="text-lg font-bold text-white">{count}</div>
-                  <p className="text-xs text-slate-400 capitalize">{status}</p>
-                </CardContent>
-              </Card>
+        {/* Filters */}
+        <div className="flex gap-4 mb-6">
+          <Input
+            placeholder="Search deals..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+          <Select value={selectedList} onValueChange={setSelectedList}>
+            <SelectTrigger className="max-w-sm">
+              <SelectValue placeholder="Filter by list" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Lists</SelectItem>
+              {lists.map((list) => (
+                <SelectItem key={list.list_id} value={list.list_id.toString()}>
+                  {list.list_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Kanban Board */}
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            {statusColumns.map((column) => (
+              <div key={column.id} className={`${column.color} rounded-lg p-4`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">{column.title}</h3>
+                  <Badge variant="secondary">
+                    {getDealsForStatus(column.id).length}
+                  </Badge>
+                </div>
+                
+                <Droppable droppableId={column.id}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`min-h-[200px] ${snapshot.isDraggingOver ? 'bg-white/50' : ''} rounded-lg`}
+                    >
+                      {getDealsForStatus(column.id).map((deal, index) => (
+                        <Draggable
+                          key={deal.application_id}
+                          draggableId={deal.application_id.toString()}
+                          index={index}
+                        >
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`bg-white rounded-lg p-3 mb-2 shadow-sm border ${
+                                snapshot.isDragging ? 'shadow-lg' : ''
+                              }`}
+                            >
+                              <div className="font-medium text-sm mb-1">
+                                {deal.leads?.first_name} {deal.leads?.last_name}
+                              </div>
+                              <div className="text-xs text-muted-foreground mb-1">
+                                {deal.leads?.companies?.name}
+                              </div>
+                              <div className="text-xs text-muted-foreground mb-2">
+                                {deal.leads?.email}
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <Badge variant="outline" className="text-xs">
+                                  {deal.type || 'Application'}
+                                </Badge>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(deal.created_at).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {deal.users?.fullname}
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
             ))}
           </div>
-        </div>
-      </div>
+        </DragDropContext>
+      </main>
     </div>
   );
 };
