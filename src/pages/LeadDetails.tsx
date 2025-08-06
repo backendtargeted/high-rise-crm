@@ -36,6 +36,13 @@ interface Application {
   date_application_sent: string;
   date_signed: string;
   created_at: string;
+  list_id: number;
+  lists?: {
+    list_id: number;
+    list_name: string;
+    list_type: string;
+    list_provider: string;
+  };
 }
 
 interface Company {
@@ -78,10 +85,18 @@ const LeadDetails = () => {
       setLead(leadData);
       setEditedLead(leadData);
 
-      // Fetch applications for this lead
+      // Fetch applications for this lead with list information
       const { data: applicationsData, error: applicationsError } = await supabase
         .from('applications_tracking')
-        .select('*')
+        .select(`
+          *,
+          lists (
+            list_id,
+            list_name,
+            list_type,
+            list_provider
+          )
+        `)
         .eq('lead_id', parseInt(id))
         .order('created_at', { ascending: false });
 
@@ -371,42 +386,55 @@ const LeadDetails = () => {
             </CardHeader>
             <CardContent>
               {applications.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Sent Date</TableHead>
-                      <TableHead>Signed Date</TableHead>
-                      <TableHead>Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {applications.map((app) => (
-                      <TableRow key={app.application_id}>
-                        <TableCell>
-                          <Badge className={getStatusColor(app.application_status)}>
-                            {app.application_status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{app.type || 'Application'}</TableCell>
-                        <TableCell>
-                          {app.date_application_sent 
-                            ? new Date(app.date_application_sent).toLocaleDateString()
-                            : '-'
-                          }
-                        </TableCell>
-                        <TableCell>
-                          {app.date_signed 
-                            ? new Date(app.date_signed).toLocaleDateString()
-                            : '-'
-                          }
-                        </TableCell>
-                        <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>List</TableHead>
+                        <TableHead>Sent Date</TableHead>
+                        <TableHead>Signed Date</TableHead>
+                        <TableHead>Created</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {applications.map((app) => (
+                        <TableRow key={app.application_id}>
+                          <TableCell>
+                            <Badge className={getStatusColor(app.application_status)}>
+                              {app.application_status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{app.type || 'Application'}</TableCell>
+                          <TableCell>
+                            {app.lists ? (
+                              <div>
+                                <div className="font-medium text-sm">{app.lists.list_name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {app.lists.list_type} • {app.lists.list_provider}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">No list assigned</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {app.date_application_sent 
+                              ? new Date(app.date_application_sent).toLocaleDateString()
+                              : '-'
+                            }
+                          </TableCell>
+                          <TableCell>
+                            {app.date_signed 
+                              ? new Date(app.date_signed).toLocaleDateString()
+                              : '-'
+                            }
+                          </TableCell>
+                          <TableCell>{new Date(app.created_at).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
               ) : (
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
