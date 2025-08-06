@@ -41,6 +41,8 @@ const Index = () => {
           )
         `);
 
+      console.log('Fetched applications:', applications); // Debug log
+
       const appsSent = applications?.filter(app => app.date_application_sent).length || 0;
       const appsSigned = applications?.filter(app => app.application_status === 'signed').length || 0;
       
@@ -53,6 +55,8 @@ const Index = () => {
         new Date(app.date_application_sent) >= sevenDaysAgo && 
         app.application_status !== 'signed'
       ) || [];
+
+      console.log('Pending apps:', pendingApps); // Debug log
 
       // For now, set funded deals to 0 as we don't have this data yet
       const fundedDeals = 0;
@@ -74,6 +78,18 @@ const Index = () => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const handleRowClick = (app) => {
+    console.log('Row clicked, app:', app); // Debug log
+    const companyId = app.leads?.companies?.company_id;
+    console.log('Company ID:', companyId); // Debug log
+    if (companyId) {
+      console.log('Navigating to:', `/companies/${companyId}`); // Debug log
+      navigate(`/companies/${companyId}`);
+    } else {
+      console.log('No company ID found'); // Debug log
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -175,12 +191,7 @@ const Index = () => {
                           <TableRow 
                             key={app.application_id}
                             className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => {
-                              const companyId = app.leads?.companies?.company_id;
-                              if (companyId) {
-                                navigate(`/companies/${companyId}`);
-                              }
-                            }}
+                            onClick={() => handleRowClick(app)}
                           >
                             <TableCell className="font-medium">
                               {app.leads?.companies?.name || 'Unknown Company'}
