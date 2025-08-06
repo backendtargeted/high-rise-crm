@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DollarSign, Send, FileSignature, CheckCircle, ExternalLink } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState({
     fundedDeals: 0,
     appsSent: 0,
@@ -14,8 +15,6 @@ const Index = () => {
     pendingApps: [],
     loading: true
   });
-  
-  const [selectedCompany, setSelectedCompany] = useState(null);
 
   const fetchDashboardData = async () => {
     try {
@@ -34,6 +33,7 @@ const Index = () => {
             email,
             company_id,
             companies (
+              company_id,
               name,
               industry,
               website
@@ -175,7 +175,12 @@ const Index = () => {
                           <TableRow 
                             key={app.application_id}
                             className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => setSelectedCompany(app.leads?.companies)}
+                            onClick={() => {
+                              const companyId = app.leads?.companies?.company_id;
+                              if (companyId) {
+                                navigate(`/companies/${companyId}`);
+                              }
+                            }}
                           >
                             <TableCell className="font-medium">
                               {app.leads?.companies?.name || 'Unknown Company'}
@@ -214,49 +219,6 @@ const Index = () => {
             </Card>
           </div>
         </div>
-
-        {/* Company Details Modal */}
-        <Dialog open={!!selectedCompany} onOpenChange={() => setSelectedCompany(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold">
-                {selectedCompany?.name || 'Company Details'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Company Name</label>
-                  <p className="text-card-foreground">{selectedCompany?.name || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Industry</label>
-                  <p className="text-card-foreground">{selectedCompany?.industry || 'N/A'}</p>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Website</label>
-                {selectedCompany?.website ? (
-                  <p className="text-card-foreground">
-                    <a 
-                      href={selectedCompany.website.startsWith('http') 
-                        ? selectedCompany.website 
-                        : `https://${selectedCompany.website}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      {selectedCompany.website}
-                    </a>
-                  </p>
-                ) : (
-                  <p className="text-card-foreground">N/A</p>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

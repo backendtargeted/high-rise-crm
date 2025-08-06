@@ -220,28 +220,26 @@ const CompanyDetails = () => {
                 <p className="text-muted-foreground">Company Details & Analytics</p>
               </div>
             </div>
-            {/* Only show edit functionality for admin users */}
-            {profile?.role === 'admin' && (
-              <div className="flex space-x-2">
-                {isEditing ? (
-                  <>
-                    <Button onClick={handleSaveChanges} size="sm">
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </Button>
-                    <Button onClick={handleCancelEdit} variant="outline" size="sm">
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-                  <Button onClick={() => setIsEditing(true)} size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Company
+            {/* Allow all authenticated users to edit, but restrict certain fields based on role */}
+            <div className="flex space-x-2">
+              {isEditing ? (
+                <>
+                  <Button onClick={handleSaveChanges} size="sm">
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
                   </Button>
-                )}
-              </div>
-            )}
+                  <Button onClick={handleCancelEdit} variant="outline" size="sm">
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setIsEditing(true)} size="sm">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Company
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Company Info */}
@@ -253,7 +251,7 @@ const CompanyDetails = () => {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="name">Company Name</Label>
-                  {isEditing && profile?.role === 'admin' ? (
+                  {isEditing ? (
                     <Input
                       id="name"
                       value={editedCompany.name || ''}
@@ -265,7 +263,7 @@ const CompanyDetails = () => {
                 </div>
                 <div>
                   <Label htmlFor="industry">Industry</Label>
-                  {isEditing && profile?.role === 'admin' ? (
+                  {isEditing ? (
                     <Input
                       id="industry"
                       value={editedCompany.industry || ''}
@@ -277,7 +275,7 @@ const CompanyDetails = () => {
                 </div>
                 <div>
                   <Label htmlFor="website">Website</Label>
-                  {isEditing && profile?.role === 'admin' ? (
+                  {isEditing ? (
                     <Input
                       id="website"
                       type="url"
