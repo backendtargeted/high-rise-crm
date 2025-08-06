@@ -5,22 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-
-interface SalesStats {
-  totalLeads: number;
-  totalApplications: number;
-  totalCompanies: number;
-  conversionRate: number;
-}
-
-interface StatusCount {
-  status: string;
-  count: number;
-}
 
 interface Deal {
   application_id: number;
@@ -42,25 +28,10 @@ interface Deal {
   };
 }
 
-interface List {
-  list_id: number;
-  list_name: string;
-}
-
 const Pipeline = () => {
   const navigate = useNavigate();
-  const [salesStats, setSalesStats] = useState<SalesStats>({
-    totalLeads: 0,
-    totalApplications: 0,
-    totalCompanies: 0,
-    conversionRate: 0,
-  });
-  const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [lists, setLists] = useState<List[]>([]);
-  const [selectedList, setSelectedList] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   const statusColumns = [
@@ -74,27 +45,8 @@ const Pipeline = () => {
     try {
       setLoading(true);
       
-      // Fetch basic counts
-      const [leadsResult, applicationsResult, companiesResult] = await Promise.all([
-        supabase.from('leads').select('*', { count: 'exact', head: true }),
-        supabase.from('applications_tracking').select('*', { count: 'exact', head: true }),
-        supabase.from('companies').select('*', { count: 'exact', head: true }),
-      ]);
-
-      const totalLeads = leadsResult.count || 0;
-      const totalApplications = applicationsResult.count || 0;
-      const totalCompanies = companiesResult.count || 0;
-      const conversionRate = totalLeads > 0 ? (totalApplications / totalLeads) * 100 : 0;
-
-      setSalesStats({
-        totalLeads,
-        totalApplications,
-        totalCompanies,
-        conversionRate: Math.round(conversionRate * 100) / 100,
-      });
-
       // Fetch deals with relationships
-      let dealsQuery = supabase
+      const { data: dealsData, error: dealsError } = await supabase
         .from('applications_tracking')
         .select(`
           *,
@@ -112,47 +64,9 @@ const Pipeline = () => {
           )
         `);
 
-      if (selectedList !== 'all') {
-        dealsQuery = dealsQuery.eq('list_id', parseInt(selectedList));
-      }
-
-      const { data: dealsData, error: dealsError } = await dealsQuery;
-
       if (dealsError) throw dealsError;
 
-      const filteredDeals = dealsData?.filter(deal => {
-        if (!searchTerm) return true;
-        const searchLower = searchTerm.toLowerCase();
-        return (
-          deal.leads?.first_name?.toLowerCase().includes(searchLower) ||
-          deal.leads?.last_name?.toLowerCase().includes(searchLower) ||
-          deal.leads?.email?.toLowerCase().includes(searchLower) ||
-          deal.leads?.companies?.name?.toLowerCase().includes(searchLower)
-        );
-      }) || [];
-
-      setDeals(filteredDeals);
-
-      // Calculate status counts from filtered deals
-      const statusMap = filteredDeals.reduce((acc: { [key: string]: number }, deal) => {
-        acc[deal.application_status] = (acc[deal.application_status] || 0) + 1;
-        return acc;
-      }, {});
-
-      const statusCountsArray = Object.entries(statusMap).map(([status, count]) => ({
-        status,
-        count: count as number,
-      }));
-
-      setStatusCounts(statusCountsArray);
-
-      // Fetch lists for filtering
-      const { data: listsData } = await supabase
-        .from('lists')
-        .select('list_id, list_name')
-        .order('list_name');
-
-      setLists(listsData || []);
+      setDeals(dealsData || []);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -214,7 +128,7 @@ const Pipeline = () => {
 
   useEffect(() => {
     fetchData();
-  }, [selectedList, searchTerm]);
+  }, []);
 
   if (loading) {
     return (
@@ -239,64 +153,6 @@ const Pipeline = () => {
           <p className="text-muted-foreground">Drag and drop deals to update their status</p>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{salesStats.totalLeads}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Applications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{salesStats.totalApplications}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Companies</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{salesStats.totalCompanies}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{salesStats.conversionRate}%</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-4 mb-6">
-          <Input
-            placeholder="Search deals..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-          <Select value={selectedList} onValueChange={setSelectedList}>
-            <SelectTrigger className="max-w-sm">
-              <SelectValue placeholder="Filter by list" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Lists</SelectItem>
-              {lists.map((list) => (
-                <SelectItem key={list.list_id} value={list.list_id.toString()}>
-                  {list.list_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
         {/* Kanban Board */}
         <Card className="p-6">
