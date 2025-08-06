@@ -29,6 +29,7 @@ interface Deal {
 }
 
 const Pipeline = () => {
+  // Clean pipeline component without filters
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [deals, setDeals] = useState<Deal[]>([]);
