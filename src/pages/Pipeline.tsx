@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,7 @@ interface Deal {
   created_at: string;
   date_application_sent?: string;
   leads: {
+    lead_id: number;
     first_name: string;
     last_name: string;
     email: string;
@@ -46,6 +48,7 @@ interface List {
 }
 
 const Pipeline = () => {
+  const navigate = useNavigate();
   const [salesStats, setSalesStats] = useState<SalesStats>({
     totalLeads: 0,
     totalApplications: 0,
@@ -62,7 +65,6 @@ const Pipeline = () => {
 
   const statusColumns = [
     { id: 'created', title: 'Created', color: 'bg-muted/50 border-l-4 border-l-muted-foreground' },
-    { id: 'sent', title: 'Sent', color: 'bg-accent/30 border-l-4 border-l-accent-foreground' },
     { id: 'viewed', title: 'Viewed', color: 'bg-primary/10 border-l-4 border-l-primary' },
     { id: 'signed', title: 'Signed', color: 'bg-secondary/50 border-l-4 border-l-secondary-foreground' },
     { id: 'funded', title: 'Funded', color: 'bg-accent/40 border-l-4 border-l-accent-foreground' },
@@ -97,6 +99,7 @@ const Pipeline = () => {
         .select(`
           *,
           leads (
+            lead_id,
             first_name,
             last_name,
             email,
@@ -298,7 +301,7 @@ const Pipeline = () => {
         {/* Kanban Board */}
         <Card className="p-6">
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {statusColumns.map((column) => (
                 <div key={column.id} className={`${column.color} rounded-lg p-4 min-h-[600px]`}>
                   <div className="flex items-center justify-between mb-4">
@@ -321,15 +324,25 @@ const Pipeline = () => {
                           draggableId={deal.application_id.toString()}
                           index={index}
                         >
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`bg-card rounded-lg p-3 mb-3 shadow-sm border border-border transition-all hover:shadow-md ${
-                                snapshot.isDragging ? 'shadow-lg rotate-3 scale-105' : ''
-                              }`}
-                            >
+                           {(provided, snapshot) => (
+                             <div
+                               ref={provided.innerRef}
+                               {...provided.draggableProps}
+                               {...provided.dragHandleProps}
+                               className={`bg-card rounded-lg p-3 mb-3 shadow-sm border border-border transition-all hover:shadow-md cursor-pointer ${
+                                 snapshot.isDragging ? 'shadow-lg rotate-3 scale-105' : ''
+                               }`}
+                               onClick={(e) => {
+                                 // Only navigate if not dragging
+                                 if (!snapshot.isDragging) {
+                                   e.stopPropagation();
+                                   const leadId = deal.leads?.lead_id;
+                                   if (leadId) {
+                                     navigate(`/leads/${leadId}`);
+                                   }
+                                 }
+                               }}
+                             >
                               <div className="font-medium text-sm mb-2 text-foreground">
                                 {deal.leads?.first_name} {deal.leads?.last_name}
                               </div>
