@@ -83,11 +83,21 @@ const Index = () => {
     console.log('Row clicked, app:', app); // Debug log
     const companyId = app.leads?.companies?.company_id;
     console.log('Company ID:', companyId); // Debug log
+    
     if (companyId) {
       console.log('Navigating to:', `/companies/${companyId}`); // Debug log
       navigate(`/companies/${companyId}`);
     } else {
-      console.log('No company ID found'); // Debug log
+      // Handle cases where lead doesn't have a company
+      console.log('No company ID found, checking for lead data'); // Debug log
+      if (app.leads?.first_name || app.leads?.email) {
+        // If we have lead info but no company, we could navigate to a lead details page
+        // For now, let's show an alert with the lead info
+        alert(`Lead Information:\nName: ${app.leads?.first_name || 'N/A'} ${app.leads?.last_name || ''}\nEmail: ${app.leads?.email || 'N/A'}\n\nThis lead doesn't have a company associated. Please assign a company to this lead.`);
+      } else {
+        console.log('No lead or company data found'); // Debug log
+        alert('No company or lead information available for this application.');
+      }
     }
   };
 
@@ -194,7 +204,18 @@ const Index = () => {
                             onClick={() => handleRowClick(app)}
                           >
                             <TableCell className="font-medium">
-                              {app.leads?.companies?.name || 'Unknown Company'}
+                              <div className="flex items-center gap-2">
+                                {app.leads?.companies?.name || (
+                                  <span className="text-amber-600 font-medium">
+                                    ⚠️ No Company Assigned
+                                  </span>
+                                )}
+                                {!app.leads?.companies?.name && app.leads?.email && (
+                                  <span className="text-sm text-muted-foreground">
+                                    ({app.leads.email})
+                                  </span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               {app.leads?.first_name && app.leads?.last_name 
@@ -214,7 +235,11 @@ const Index = () => {
                               </span>
                             </TableCell>
                             <TableCell>
-                              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                              {app.leads?.companies?.company_id ? (
+                                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <span className="text-xs text-amber-600">⚠️ No Company</span>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
